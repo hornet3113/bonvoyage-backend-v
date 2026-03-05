@@ -94,3 +94,68 @@ export async function GET(_req: Request, { params }: Params) {
     return err('Internal server error', 500)
   }
 }
+
+// ------------------------------------------------------------
+//  PATCH /api/trips/[tripId]
+//  Actualiza campos editables del viaje
+// ------------------------------------------------------------
+export async function PATCH(req: Request, { params }: Params) {
+  const { userId: clerkId } = await auth()
+  if (!clerkId) return err('Unauthorized', 401)
+
+  const { tripId } = await params
+  const body        = await req.json()
+  const parsed      = UpdateTripSchema.safeParse(body)
+  if (!parsed.success) {
+    return err(parsed.error.flatten().fieldErrors as unknown as string, 400)
+  }
+
+  const { trip_name, start_date, end_date, total_budget, currency, is_favorite } = parsed.data
+
+  try {
+    const userId = await resolveUserId(clerkId)
+    if (!userId) return err('User not found', 404)
+
+    // Validar que el viaje pertenece al usuario y está en DRAFT
+    const existing = await db.query(
+      `SELECT status FROM trips WHERE trip_id = $1 AND user_id = $2`,
+      [tripId, userId]
+    )
+    if (!existing.rows[0]) return err('Trip not found', 404)
+    if (existing.rows[0].status !== 'DRAFT') {
+      return err('Only DRAFT trips can be edited', 400)
+    }
+
+    const result = await db.query(
+      `UPDATE trips
+       SET
+         trip_name    = COALESCE($1, trip_name),
+         start_date   = COALESCE($2::date, start_date),
+         end_date     = COALESCE($3::date, end_date),
+         total_budget = COALESCE($4, total_budget),
+         currency     = COALESCE($5, currency),
+         is_favorite  = COALESCE($6, is_favorite),
+         updated_at   = NOW()
+       WHERE trip_id = $7
+         AND user_id = $8
+       RETURNING trip_id, trip_name, start_date, end_date,
+                 status, total_budget, currency, is_favorite, updated_at`,
+      [
+        trip_name    ?? null,
+        start_date   ?? null,
+        end_date     ?? null,
+        total_budget ?? null,
+        currency     ?? null,
+        is_favorite  ?? null,
+        tripId,
+        userId,
+      ]
+    )
+
+    return ok(result.rows[0])
+
+  } catch (error) {
+    console.error('[PATCH /trips/:tripId]', error)
+    return err('Internal server error', 500)
+  }
+}
