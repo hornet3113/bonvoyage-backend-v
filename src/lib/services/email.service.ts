@@ -76,3 +76,15 @@ function baseTemplate(content: string): string {
 </html>`
 }
 
+function primaryButton(text: string, url: string): string {
+  return `
+  <div style="text-align:center;margin:32px 0;">
+    <a href="${url}"
+       style="background-color:#4ECDC4;color:#ffffff;padding:14px 32px;
+              border-radius:6px;text-decoration:none;font-weight:700;
+              font-size:15px;display:inline-block;">
+      ${text}
+    </a>
+  </div>`
+}
+
