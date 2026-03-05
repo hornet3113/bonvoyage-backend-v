@@ -74,8 +74,13 @@ export async function POST(req: Request) {
     let provider:   Provider          = 'LOCAL'
     let providerId: string | undefined = undefined
 
-    const googleAccount = external_accounts.find((acc) => acc.provider === 'google')
-    const appleAccount  = external_accounts.find((acc) => acc.provider === 'apple')
+const googleAccount = external_accounts.find((acc) => 
+  acc.provider === 'google' || acc.provider === 'oauth_google'
+)
+const appleAccount  = external_accounts.find((acc) => 
+  acc.provider === 'apple' || acc.provider === 'oauth_apple'
+)
+
 
     if (googleAccount) {
       provider   = 'GOOGLE'
