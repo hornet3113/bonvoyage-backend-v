@@ -158,10 +158,10 @@ function buildTemplate(type: NotificationType, data: Record<string, unknown>): {
 
     case 'TRIP_CONFIRMED':
       return {
-        subject: `¡Viaje confirmado! "${data.trip_name}" 🎉`,
+        subject: `¡Viaje confirmado! "${data.trip_name}" `,
         html: baseTemplate(`
           <h2 style="color:#1B2A4A;margin-top:0;">
-            ¡Tu viaje está confirmado! 🎉
+            ¡Tu viaje está confirmado! 
           </h2>
           <p style="color:#4a5568;line-height:1.7;font-size:15px;">
             <strong>"${data.trip_name}"</strong> ha sido confirmado.
@@ -176,10 +176,10 @@ function buildTemplate(type: NotificationType, data: Record<string, unknown>): {
 
     case 'TRIP_UPCOMING':
       return {
-        subject: `✈️ Tu viaje "${data.trip_name}" es en ${data.days_until} días`,
+        subject: `Tu viaje "${data.trip_name}" es en ${data.days_until} días`,
         html: baseTemplate(`
           <h2 style="color:#1B2A4A;margin-top:0;">
-            ¡Tu viaje se acerca! 🌍
+            ¡Tu viaje se acerca! 
           </h2>
           <p style="color:#4a5568;line-height:1.7;font-size:15px;">
             <strong>"${data.trip_name}"</strong> comienza en
