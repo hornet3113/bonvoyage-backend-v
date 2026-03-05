@@ -46,7 +46,7 @@ function baseTemplate(content: string): string {
           <tr>
             <td style="background-color:#1B2A4A;padding:32px 40px;text-align:center;">
               <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;letter-spacing:1px;">
-                ✈️ Bon Voyage
+                 Bon Voyage
               </h1>
             </td>
           </tr>
@@ -99,10 +99,10 @@ function buildTemplate(type: NotificationType, data: Record<string, unknown>): {
 
     case 'WELCOME':
       return {
-        subject: '¡Bienvenido a Bon Voyage! ✈️',
+        subject: '¡Bienvenido a Bon Voyage! ',
         html: baseTemplate(`
           <h2 style="color:#1B2A4A;margin-top:0;">
-            ¡Hola, ${data.first_name}! 👋
+            ¡Hola, ${data.first_name}! 
           </h2>
           <p style="color:#4a5568;line-height:1.7;font-size:15px;">
             Tu cuenta en <strong>Bon Voyage</strong> está lista.
@@ -122,7 +122,7 @@ function buildTemplate(type: NotificationType, data: Record<string, unknown>): {
 
     case 'DRAFT_REMINDER':
       return {
-        subject: `Tu viaje "${data.trip_name}" te está esperando 🗺️`,
+        subject: `Tu viaje "${data.trip_name}" te está esperando `,
         html: baseTemplate(`
           <h2 style="color:#1B2A4A;margin-top:0;">
             ¿Sigues planeando tu viaje?
@@ -140,7 +140,7 @@ function buildTemplate(type: NotificationType, data: Record<string, unknown>): {
 
     case 'ARCHIVE_WARNING':
       return {
-        subject: `⚠️ Tu viaje "${data.trip_name}" se archivará pronto`,
+        subject: ` Tu viaje "${data.trip_name}" se archivará pronto`,
         html: baseTemplate(`
           <h2 style="color:#e53e3e;margin-top:0;">
             Tu borrador está por archivarse
