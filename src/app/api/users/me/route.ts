@@ -77,3 +77,30 @@ export async function PATCH(req: Request) {
   }
 }
 
+// ------------------------------------------------------------
+//  DELETE /api/users/me
+//  Soft delete: deleted_at + status = INACTIVE
+// ------------------------------------------------------------
+export async function DELETE() {
+  const { userId: clerkId } = await auth()
+  if (!clerkId) return err('Unauthorized', 401)
+
+  try {
+    const userId = await resolveUserId(clerkId)
+    if (!userId) return err('User not found', 404)
+
+    await db.query(
+      `UPDATE users
+       SET deleted_at = NOW(),
+           status     = 'INACTIVE'
+       WHERE user_id    = $1
+         AND deleted_at IS NULL`,
+      [userId]
+    )
+
+    return ok({ deleted: true, user_id: userId })
+  } catch (error) {
+    console.error('[DELETE /users/me]', error)
+    return err('Internal server error', 500)
+  }
+}
