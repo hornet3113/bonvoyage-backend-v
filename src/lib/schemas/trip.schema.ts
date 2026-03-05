@@ -1,0 +1,134 @@
+import { z } from 'zod'
+
+
+export const CreateTripSchema = z.object({
+  trip_name:      z.string().min(1).max(255),
+  destination_id: z.string().uuid().optional(),
+  start_date:     z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format must be YYYY-MM-DD'),
+  end_date:       z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format must be YYYY-MM-DD'),
+  total_budget:   z.number().positive().optional(),
+  currency:       z.enum(['USD', 'EUR', 'MXN', 'JPY', 'GBP', 'THB']).optional(),
+}).refine(
+  (data) => new Date(data.end_date) >= new Date(data.start_date),
+  { message: 'end_date must be >= start_date', path: ['end_date'] }
+).refine(
+  (data) => {
+    const start = new Date(data.start_date)
+    const end   = new Date(data.end_date)
+    const days  = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+    return days <= 30
+  },
+  { message: 'Trip cannot exceed 30 days', path: ['end_date'] }
+)
+
+export const UpdateTripSchema = z.object({
+  trip_name:    z.string().min(1).max(255).optional(),
+  start_date:   z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  end_date:     z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  total_budget: z.number().positive().optional(),
+  currency:     z.enum(['USD', 'EUR', 'MXN', 'JPY', 'GBP', 'THB']).optional(),
+  is_favorite:  z.boolean().optional(),
+}).refine(
+  (data) => Object.keys(data).length > 0,
+  { message: 'At least one field must be provided' }
+)
+
+export const AddItineraryItemSchema = z.discriminatedUnion('item_type', [
+  z.object({
+    item_type:        z.literal('PLACE'),
+    place_reference_id: z.string().uuid(),
+    start_time:       z.string().regex(/^\d{2}:\d{2}$/).optional(),
+    end_time:         z.string().regex(/^\d{2}:\d{2}$/).optional(),
+    estimated_cost:   z.number().nonnegative().optional(),
+    notes:            z.string().max(500).optional(),
+  }),
+  z.object({
+    item_type:          z.literal('FLIGHT'),
+    flight_reference_id: z.string().uuid(),
+    estimated_cost:     z.number().nonnegative().optional(),
+    notes:              z.string().max(500).optional(),
+  }),
+])
+
+export const UpdateItineraryItemSchema = z.object({
+  start_time:     z.string().regex(/^\d{2}:\d{2}$/).optional(),
+  end_time:       z.string().regex(/^\d{2}:\d{2}$/).optional(),
+  estimated_cost: z.number().nonnegative().optional(),
+  notes:          z.string().max(500).optional(),
+  status:         z.enum(['PLANNED', 'CONFIRMED', 'CANCELLED']).optional(),
+}).refine(
+  (data) => Object.keys(data).length > 0,
+  { message: 'At least one field must be provided' }
+)
+
+export const MoveItemSchema = z.object({
+  target_day_id: z.string().uuid(),
+})
+
+
+export const TripResponseSchema = z.object({
+  trip_id:          z.string().uuid(),
+  user_id:          z.string().uuid(),
+  destination_id:   z.string().uuid().nullable(),
+  trip_name:        z.string(),
+  start_date:       z.coerce.date(),
+  end_date:         z.coerce.date(),
+  status:           z.enum(['DRAFT', 'CONFIRMED', 'COMPLETED', 'CANCELLED']),
+  total_budget:     z.number().nullable(),
+  currency:         z.string(),
+  is_favorite:      z.boolean(),
+  confirmed_at:     z.coerce.date().nullable(),
+  created_at:       z.coerce.date(),
+  updated_at:       z.coerce.date(),
+  destination_name: z.string().nullable(),
+  destination_city: z.string().nullable(),
+  destination_image:z.string().nullable(),
+  total_days:       z.number(),
+  total_items:      z.number(),
+})
+
+export const ItineraryDaySchema = z.object({
+  day_id:     z.string().uuid(),
+  trip_id:    z.string().uuid(),
+  day_date:   z.coerce.date(),
+  day_number: z.number(),
+  notes:      z.string().nullable(),
+  items:      z.array(z.object({
+    item_id:             z.string().uuid(),
+    item_type:           z.enum(['PLACE', 'FLIGHT']),
+    order_position:      z.number(),
+    start_time:          z.string().nullable(),
+    end_time:            z.string().nullable(),
+    estimated_cost:      z.number().nullable(),
+    notes:               z.string().nullable(),
+    status:              z.enum(['PLANNED', 'CONFIRMED', 'CANCELLED']),
+    place_reference_id:  z.string().uuid().nullable(),
+    flight_reference_id: z.string().uuid().nullable(),
+  })).default([]),
+})
+
+export const ItineraryItemResponseSchema = z.object({
+  item_id:             z.string().uuid(),
+  day_id:              z.string().uuid(),
+  item_type:           z.enum(['PLACE', 'FLIGHT']),
+  place_reference_id:  z.string().uuid().nullable(),
+  flight_reference_id: z.string().uuid().nullable(),
+  order_position:      z.number(),
+  start_time:          z.string().nullable(),
+  end_time:            z.string().nullable(),
+  estimated_cost:      z.number().nullable(),
+  notes:               z.string().nullable(),
+  status:              z.enum(['PLANNED', 'CONFIRMED', 'CANCELLED']),
+  created_at:          z.coerce.date(),
+  updated_at:          z.coerce.date(),
+})
+
+
+export type CreateTripInput          = z.infer<typeof CreateTripSchema>
+export type UpdateTripInput          = z.infer<typeof UpdateTripSchema>
+export type AddItineraryItemInput    = z.infer<typeof AddItineraryItemSchema>
+export type UpdateItineraryItemInput = z.infer<typeof UpdateItineraryItemSchema>
+export type MoveItemInput            = z.infer<typeof MoveItemSchema>
+export type TripResponse             = z.infer<typeof TripResponseSchema>
+export type ItineraryDay             = z.infer<typeof ItineraryDaySchema>
+export type ItineraryItemResponse    = z.infer<typeof ItineraryItemResponseSchema>
