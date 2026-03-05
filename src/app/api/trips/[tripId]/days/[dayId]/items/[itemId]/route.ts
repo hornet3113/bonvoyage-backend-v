@@ -78,3 +78,32 @@ export async function PATCH(req: Request, { params }: Params) {
   }
 }
 
+// ------------------------------------------------------------
+//  DELETE /api/trips/[tripId]/days/[dayId]/items/[itemId]
+//  Elimina el ítem y recalcula order_position del día
+// ------------------------------------------------------------
+export async function DELETE(_req: Request, { params }: Params) {
+  const { userId: clerkId } = await auth()
+  if (!clerkId) return err('Unauthorized', 401)
+
+  const { tripId, dayId, itemId } = await params
+
+  try {
+    const userId = await resolveUserId(clerkId)
+    if (!userId) return err('User not found', 404)
+
+    const isOwner = await validateItemOwnership(itemId, dayId, tripId, userId)
+    if (!isOwner) return err('Item not found', 404)
+
+    await db.query(`DELETE FROM itinerary_items WHERE item_id = $1`, [itemId])
+
+    // Recalcular order_position de los ítems restantes del día
+    await db.query(`SELECT fn_reorder_day_items($1)`, [dayId])
+
+    return ok({ deleted: true, item_id: itemId })
+
+  } catch (error) {
+    console.error('[DELETE /trips/:tripId/days/:dayId/items/:itemId]', error)
+    return err('Internal server error', 500)
+  }
+}
