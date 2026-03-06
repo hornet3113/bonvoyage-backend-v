@@ -1,9 +1,16 @@
-import { Resend } from 'resend'
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { BrevoClient } = require('@getbrevo/brevo')
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+const brevoClient = new BrevoClient({
+  apiKey: process.env.BREVO_API_KEY ?? '',
+})
 
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL ?? 'Bon Voyage <noreply@bonvoyage.app>'
+const FROM_EMAIL = process.env.BREVO_FROM_EMAIL ?? 'noreply@bonvoyage.app'
+const FROM_NAME  = 'Bon Voyage'
 
+// ============================================================
+//  TIPOS
+// ============================================================
 
 export type NotificationType =
   | 'WELCOME'
@@ -25,6 +32,9 @@ export interface SendEmailResult {
   error?:    string
 }
 
+// ============================================================
+//  TEMPLATES HTML
+// ============================================================
 
 function baseTemplate(content: string): string {
   return `
@@ -88,6 +98,9 @@ function primaryButton(text: string, url: string): string {
   </div>`
 }
 
+// ============================================================
+//  TEMPLATES POR TIPO
+// ============================================================
 
 function buildTemplate(type: NotificationType, data: Record<string, unknown>): {
   subject: string
@@ -102,7 +115,7 @@ function buildTemplate(type: NotificationType, data: Record<string, unknown>): {
         subject: '¡Bienvenido a Bon Voyage! ',
         html: baseTemplate(`
           <h2 style="color:#1B2A4A;margin-top:0;">
-            ¡Hola, ${data.first_name}! 
+            ¡Hola, ${data.first_name}! 👋
           </h2>
           <p style="color:#4a5568;line-height:1.7;font-size:15px;">
             Tu cuenta en <strong>Bon Voyage</strong> está lista.
@@ -176,7 +189,7 @@ function buildTemplate(type: NotificationType, data: Record<string, unknown>): {
 
     case 'TRIP_UPCOMING':
       return {
-        subject: `Tu viaje "${data.trip_name}" es en ${data.days_until} días`,
+        subject: ` Tu viaje "${data.trip_name}" es en ${data.days_until} días`,
         html: baseTemplate(`
           <h2 style="color:#1B2A4A;margin-top:0;">
             ¡Tu viaje se acerca! 
@@ -229,18 +242,14 @@ export async function sendEmail(options: SendEmailOptions): Promise<SendEmailRes
   try {
     const { subject, html } = buildTemplate(notification_type, template_data)
 
-    const response = await resend.emails.send({
-      from:    FROM_EMAIL,
-      to:      [to],
+    const response = await brevoClient.transactionalEmails.sendTransacEmail({
       subject,
-      html,
+      htmlContent: html,
+      sender:      { name: FROM_NAME, email: FROM_EMAIL },
+      to:          [{ email: to }],
     })
 
-    if (response.error) {
-      return { success: false, error: response.error.message }
-    }
-
-    return { success: true, messageId: response.data?.id }
+    return { success: true, messageId: response.messageId }
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error'
