@@ -35,17 +35,42 @@ export async function POST(req: NextRequest) {
         INSERT INTO user_identities (user_id, provider, provider_id)
         VALUES ($1, 'GOOGLE', $2);
       `, [internalUserId, userId]);
-      
-      console.log("✅ Usuario sincronizado con éxito");
     } else {
       internalUserId = userQuery.rows[0].user_id;
     }
 
     const body = await req.json();
-    const { trip_name, destination_id, start_date, end_date, currency, total_budget } = body;
+    const { 
+      trip_name, start_date, end_date, currency, total_budget,
+      destination_name, destination_country, latitude, longitude 
+    } = body;
 
-    if (!trip_name || !destination_id || !start_date || !end_date) {
+    if (!trip_name || !destination_name || !start_date || !end_date) {
       return NextResponse.json({ error: "Faltan campos obligatorios" }, { status: 400 });
+    }
+
+    let destId;
+    
+    const existingDest = await db.query(
+      'SELECT destination_id FROM destinations WHERE name = $1 LIMIT 1',
+      [destination_name]
+    );
+
+    if (existingDest.rows.length > 0) {
+      destId = existingDest.rows[0].destination_id;
+    } else {
+      const newDest = await db.query(`
+        INSERT INTO destinations (name, country, latitude, longitude)
+        VALUES ($1, $2, $3, $4)
+        RETURNING destination_id;
+      `, [
+        destination_name, 
+        destination_country || 'Unknown', 
+        latitude || null, 
+        longitude || null
+      ]);
+      
+      destId = newDest.rows[0].destination_id;
     }
 
     const tripQuery = `
@@ -56,7 +81,7 @@ export async function POST(req: NextRequest) {
 
     const tripValues = [
       internalUserId, 
-      destination_id, 
+      destId, 
       trip_name, 
       start_date, 
       end_date, 
@@ -72,38 +97,28 @@ export async function POST(req: NextRequest) {
     
     const diffTime = Math.abs(end.getTime() - start.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-
     const totalDays = Math.min(diffDays, 30);
-    const createdDays = [];
 
     for (let i = 0; i < totalDays; i++) {
       const currentDayDate = new Date(start);
       currentDayDate.setDate(start.getDate() + i);
-      
       const dayDateString = currentDayDate.toISOString().split('T')[0];
 
-      const dayResult = await db.query(`
+      await db.query(`
         INSERT INTO itinerary_days (trip_id, day_date, day_number)
         VALUES ($1, $2, $3)
-        ON CONFLICT (trip_id, day_number) DO NOTHING
-        RETURNING day_id;
+        ON CONFLICT (trip_id, day_number) DO NOTHING;
       `, [tripId, dayDateString, i + 1]);
-
-      createdDays.push(dayResult.rows[0]?.day_id);
     }
 
     return NextResponse.json({
       success: true,
-      message: "Viaje e itinerario creados exitosamente",
-      data: {
-        tripId,
-        totalDays: totalDays,
-        days: createdDays
-      }
+      message: "Viaje, destino e itinerario creados exitosamente",
+      trip_id: tripId 
     });
 
   } catch (error: any) {
-    console.error("❌ Error en la creación del viaje:", error.message);
+    console.error(" Error en la creación del viaje:", error.message);
     return NextResponse.json(
       { error: "Error interno del servidor", details: error.message },
       { status: 500 }
