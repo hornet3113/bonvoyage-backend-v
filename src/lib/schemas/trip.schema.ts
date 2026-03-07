@@ -80,11 +80,14 @@ export const TripResponseSchema = z.object({
   confirmed_at:     z.coerce.date().nullable(),
   created_at:       z.coerce.date(),
   updated_at:       z.coerce.date(),
-  destination_name: z.string().nullable(),
-  destination_city: z.string().nullable(),
-  destination_image:z.string().nullable(),
-  total_days:       z.coerce.number(),
-  total_items:      z.coerce.number(),
+  destination_name:    z.string().nullable(),
+  destination_city:    z.string().nullable(),
+  destination_image:   z.string().nullable(),
+  destination_lat:     z.coerce.number().nullable().optional(),
+  destination_lng:     z.coerce.number().nullable().optional(),
+  destination_country: z.string().nullable().optional(),
+  total_days:          z.coerce.number(),
+  total_items:         z.coerce.number(),
 })
 
 export const ItineraryDaySchema = z.object({
@@ -104,6 +107,22 @@ export const ItineraryDaySchema = z.object({
     status:              z.enum(['PLANNED', 'CONFIRMED', 'CANCELLED']),
     place_reference_id:  z.string().uuid().nullable(),
     flight_reference_id: z.string().uuid().nullable(),
+    // enriched place fields (joined from place_references)
+    place_name:          z.string().nullable().optional(),
+    place_category:      z.string().nullable().optional(),
+    place_latitude:      z.coerce.number().nullable().optional(),
+    place_longitude:     z.coerce.number().nullable().optional(),
+    place_rating:        z.coerce.number().nullable().optional(),
+    place_address:       z.string().nullable().optional(),
+    place_photo_url:     z.string().nullable().optional(),
+    place_price_level:   z.string().nullable().optional(),
+    place_external_id:   z.string().nullable().optional(),
+    // enriched flight fields (joined from flight_references)
+    flight_airline_code:        z.string().nullable().optional(),
+    flight_origin_airport:      z.string().nullable().optional(),
+    flight_destination_airport: z.string().nullable().optional(),
+    flight_departure_time:      z.string().nullable().optional(),
+    flight_price:               z.coerce.number().nullable().optional(),
   })).default([]),
 })
 

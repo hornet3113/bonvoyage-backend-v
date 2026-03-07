@@ -34,6 +34,9 @@ export async function GET(_req: Request, { params }: Params) {
          d.name      AS destination_name,
          d.city      AS destination_city,
          d.image_url AS destination_image,
+         d.latitude  AS destination_lat,
+         d.longitude AS destination_lng,
+         d.country   AS destination_country,
          (t.end_date - t.start_date + 1)     AS total_days,
          COUNT(ii.item_id)                   AS total_items
        FROM trips t
@@ -43,7 +46,7 @@ export async function GET(_req: Request, { params }: Params) {
                                      AND ii.status       <> 'CANCELLED'
        WHERE t.trip_id = $1
          AND t.user_id = $2
-       GROUP BY t.trip_id, d.name, d.city, d.image_url`,
+       GROUP BY t.trip_id, d.name, d.city, d.image_url, d.latitude, d.longitude, d.country`,
       [tripId, userId]
     )
 
@@ -77,16 +80,22 @@ export async function GET(_req: Request, { params }: Params) {
                'place_longitude',     pr.longitude,
                'place_rating',        pr.rating,
                'place_address',       pr.extended_data->>'address',
-               'place_photo_url',     pr.extended_data->>'photo_url',
+               'place_photo_url',     COALESCE(pr.extended_data->>'photo_url', pr.extended_data->>'imageUrl'),
                'place_price_level',   pr.extended_data->>'price_level',
-               'place_external_id',   pr.external_id
+               'place_external_id',   pr.external_id,
+               'flight_airline_code',        fr.airline_code,
+               'flight_origin_airport',      fr.origin_airport,
+               'flight_destination_airport', fr.destination_airport,
+               'flight_departure_time',      fr.departure_time,
+               'flight_price',               fr.price
              ) ORDER BY ii.order_position
            ) FILTER (WHERE ii.item_id IS NOT NULL),
            '[]'
          ) AS items
        FROM itinerary_days id_
-       LEFT JOIN itinerary_items  ii ON ii.day_id       = id_.day_id
-       LEFT JOIN place_references pr ON pr.reference_id = ii.place_reference_id
+       LEFT JOIN itinerary_items   ii ON ii.day_id        = id_.day_id
+       LEFT JOIN place_references  pr ON pr.reference_id  = ii.place_reference_id
+       LEFT JOIN flight_references fr ON fr.reference_id  = ii.flight_reference_id
        WHERE id_.trip_id = $1
        GROUP BY id_.day_id
        ORDER BY id_.day_number`,

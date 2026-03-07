@@ -2,6 +2,65 @@ import { NextRequest, NextResponse } from "next/server";
 import  db  from "@/lib/db";
 import { auth, currentUser } from "@clerk/nextjs/server";
 
+export async function GET() {
+  try {
+    const { userId } = await auth();
+
+    if (!userId) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
+    const userQuery = await db.query(
+      'SELECT user_id FROM user_identities WHERE provider_id = $1',
+      [userId]
+    );
+
+    if (userQuery.rows.length === 0) {
+      return NextResponse.json([], { status: 200 });
+    }
+
+    const internalUserId = userQuery.rows[0].user_id;
+
+    const tripsResult = await db.query(
+      `SELECT
+         t.trip_id,
+         t.user_id,
+         t.destination_id,
+         t.trip_name,
+         t.start_date,
+         t.end_date,
+         t.status,
+         t.total_budget,
+         t.currency,
+         t.is_favorite,
+         t.confirmed_at,
+         t.created_at,
+         t.updated_at,
+         d.name AS destination_name,
+         d.city AS destination_city,
+         d.image_url AS destination_image,
+         (t.end_date - t.start_date + 1) AS total_days,
+         COUNT(ii.item_id) FILTER (WHERE ii.status <> 'CANCELLED') AS total_items
+       FROM trips t
+       LEFT JOIN destinations d ON d.destination_id = t.destination_id
+       LEFT JOIN itinerary_days id_ ON id_.trip_id = t.trip_id
+       LEFT JOIN itinerary_items ii ON ii.day_id = id_.day_id
+       WHERE t.user_id = $1
+       GROUP BY t.trip_id, d.name, d.city, d.image_url
+       ORDER BY t.is_favorite DESC, t.start_date DESC, t.created_at DESC`,
+      [internalUserId]
+    );
+
+    return NextResponse.json(tripsResult.rows, { status: 200 });
+  } catch (error: any) {
+    console.error(" Error al listar viajes:", error.message);
+    return NextResponse.json(
+      { error: "Error interno del servidor", details: error.message },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await auth();
@@ -40,12 +99,22 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { 
+    const {
       trip_name, start_date, end_date, currency, total_budget,
-      destination_name, destination_country, latitude, longitude 
+      destination_name, destination_country, destination_city, city, latitude, longitude
     } = body;
 
-    if (!trip_name || !destination_name || !start_date || !end_date) {
+    const normalizedDestinationName = typeof destination_name === 'string'
+      ? destination_name.trim()
+      : '';
+    const normalizedDestinationCity = typeof destination_city === 'string'
+      ? destination_city.trim()
+      : typeof city === 'string'
+        ? city.trim()
+        : '';
+    const safeDestinationCity = normalizedDestinationCity || normalizedDestinationName || 'Unknown';
+
+    if (!trip_name || !normalizedDestinationName || !start_date || !end_date) {
       return NextResponse.json({ error: "Faltan campos obligatorios" }, { status: 400 });
     }
 
@@ -53,18 +122,19 @@ export async function POST(req: NextRequest) {
     
     const existingDest = await db.query(
       'SELECT destination_id FROM destinations WHERE name = $1 LIMIT 1',
-      [destination_name]
+      [normalizedDestinationName]
     );
 
     if (existingDest.rows.length > 0) {
       destId = existingDest.rows[0].destination_id;
     } else {
       const newDest = await db.query(`
-        INSERT INTO destinations (name, country, latitude, longitude)
-        VALUES ($1, $2, $3, $4)
+        INSERT INTO destinations (name, city, country, latitude, longitude)
+        VALUES ($1, $2, $3, $4, $5)
         RETURNING destination_id;
       `, [
-        destination_name, 
+        normalizedDestinationName,
+        safeDestinationCity,
         destination_country || 'Unknown', 
         latitude || null, 
         longitude || null

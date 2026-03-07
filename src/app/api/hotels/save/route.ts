@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     
     const placeResult = await db.query(upsertPlaceQuery, [
       id, name, latitude, longitude, parseFloat(rating) || 0,
-      JSON.stringify({ imageUrl, price })
+      JSON.stringify({ photo_url: imageUrl, price })
     ]);
     const reference_id = placeResult.rows[0].reference_id;
 

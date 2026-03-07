@@ -16,12 +16,12 @@ export const WishlistItemResponseSchema = z.object({
   // Campos enriquecidos desde vw_wishlist (pueden ser null si no hay destino en catálogo)
   destination_id:    z.string().uuid().nullable(),
   destination_image: z.string().nullable(),
-  latitude:          z.number().nullable(),
-  longitude:         z.number().nullable(),
+  latitude:          z.coerce.number().nullable(),
+  longitude:         z.coerce.number().nullable(),
   timezone:          z.string().nullable(),
   currency_code:     z.string().nullable(),
-  popular_months:    z.array(z.number()).nullable(),
-  min_flight_price:  z.number().nullable(),
+  popular_months:    z.array(z.coerce.number()).nullable(),
+  min_flight_price:  z.coerce.number().nullable(),
 })
 
 
