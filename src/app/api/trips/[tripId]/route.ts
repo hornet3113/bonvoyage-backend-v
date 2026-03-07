@@ -34,6 +34,9 @@ export async function GET(_req: Request, { params }: Params) {
          d.name      AS destination_name,
          d.city      AS destination_city,
          d.image_url AS destination_image,
+         d.latitude  AS destination_lat,
+         d.longitude AS destination_lng,
+         d.country   AS destination_country,
          (t.end_date - t.start_date + 1)     AS total_days,
          COUNT(ii.item_id)                   AS total_items
        FROM trips t
@@ -43,7 +46,7 @@ export async function GET(_req: Request, { params }: Params) {
                                      AND ii.status       <> 'CANCELLED'
        WHERE t.trip_id = $1
          AND t.user_id = $2
-       GROUP BY t.trip_id, d.name, d.city, d.image_url`,
+       GROUP BY t.trip_id, d.name, d.city, d.image_url, d.latitude, d.longitude, d.country`,
       [tripId, userId]
     )
 

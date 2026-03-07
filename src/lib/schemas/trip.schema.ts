@@ -80,11 +80,14 @@ export const TripResponseSchema = z.object({
   confirmed_at:     z.coerce.date().nullable(),
   created_at:       z.coerce.date(),
   updated_at:       z.coerce.date(),
-  destination_name: z.string().nullable(),
-  destination_city: z.string().nullable(),
-  destination_image:z.string().nullable(),
-  total_days:       z.coerce.number(),
-  total_items:      z.coerce.number(),
+  destination_name:    z.string().nullable(),
+  destination_city:    z.string().nullable(),
+  destination_image:   z.string().nullable(),
+  destination_lat:     z.coerce.number().nullable().optional(),
+  destination_lng:     z.coerce.number().nullable().optional(),
+  destination_country: z.string().nullable().optional(),
+  total_days:          z.coerce.number(),
+  total_items:         z.coerce.number(),
 })
 
 export const ItineraryDaySchema = z.object({
