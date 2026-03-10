@@ -10,17 +10,35 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { 
-      id, name, latitude, longitude, rating, type, address, 
-      trip_id, day_id 
-    } = body;
+    const id = body.id ?? body.external_id;
+    const name = body.name ?? body.item_name;
+    const latitudeRaw = body.latitude ?? body.lat;
+    const longitudeRaw = body.longitude ?? body.lng;
+    const ratingRaw = body.rating;
+    const type = body.type ?? body.service_type ?? null;
+    const address = body.address ?? null;
+    const trip_id = body.trip_id;
+    const day_id = body.day_id;
 
-    if (!trip_id || !day_id || !id) {
+    if (!trip_id || !day_id || !id || !name) {
       return NextResponse.json(
-        { error: "Faltan datos obligatorios (trip_id, day_id, id)" }, 
+        { error: "Faltan datos obligatorios (trip_id, day_id, id, name)" }, 
         { status: 400 }
       );
     }
+
+    const latitude = Number(latitudeRaw);
+    const longitude = Number(longitudeRaw);
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      return NextResponse.json({ error: "latitude/longitude inválidos" }, { status: 400 });
+    }
+
+    if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+      return NextResponse.json({ error: "latitude/longitude fuera de rango" }, { status: 400 });
+    }
+
+    const rating = Number(ratingRaw);
+    const safeRating = Number.isFinite(rating) ? rating : 0;
 
     
     const upsertPlaceQuery = `
@@ -41,7 +59,7 @@ export async function POST(request: NextRequest) {
       name, 
       latitude, 
       longitude, 
-      parseFloat(rating) || 0, 
+      safeRating, 
       extendedData
     ]);
     const reference_id = placeResult.rows[0].reference_id;
