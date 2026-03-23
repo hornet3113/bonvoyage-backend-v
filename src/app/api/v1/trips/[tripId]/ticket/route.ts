@@ -3,6 +3,8 @@ import db from '@/lib/db'
 import { ok, err } from '@/lib/response'
 import { TicketResponseSchema } from '@/lib/schemas/trip.schema'
 
+export const dynamic = 'force-dynamic'
+
 type Params = { params: Promise<{ tripId: string }> }
 
 export async function GET(
