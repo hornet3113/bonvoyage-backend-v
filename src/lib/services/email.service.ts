@@ -107,7 +107,7 @@ function buildTemplate(type: NotificationType, data: Record<string, unknown>): {
   subject: string
   html:    string
 } {
-  const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://bonvoyage.app'
+  const APP_URL = process.env.NEXT_PUBLIC_APP_URL 
 
   switch (type) {
 
