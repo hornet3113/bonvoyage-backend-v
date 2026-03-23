@@ -157,12 +157,12 @@ export type ItineraryItemResponse    = z.infer<typeof ItineraryItemResponseSchem
 export const TicketResponseSchema = z.object({
   ticket_id:           z.string().uuid(),
   trip_id:             z.string().uuid(),
-  presupuesto_total:   z.coerce.number(),
-  costo_acumulado:     z.coerce.number(),
-  balance_disponible:  z.coerce.number(),
-  total_lugares:       z.coerce.number(),
-  total_vuelos:        z.coerce.number(),
-  total_items:         z.coerce.number(),
+  presupuesto_total:   z.coerce.number().catch(0),
+  costo_acumulado:     z.coerce.number().catch(0),
+  balance_disponible:  z.coerce.number().catch(0),
+  total_lugares:       z.coerce.number().catch(0),
+  total_vuelos:        z.coerce.number().catch(0),
+  total_items:         z.coerce.number().catch(0),
   estado_presupuesto:  z.enum(['SIN_DATOS', 'EN_RANGO', 'ADVERTENCIA', 'EXCEDIDO']).nullish().transform(v => v ?? 'SIN_DATOS'),
   updated_at:          z.coerce.date(),
 })
