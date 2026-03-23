@@ -1,0 +1,67 @@
+﻿{
+    "variable":  [
+                     {
+                         "key":  "baseUrl",
+                         "type":  "string",
+                         "value":  ""
+                     },
+                     {
+                         "key":  "authToken",
+                         "type":  "string",
+                         "value":  ""
+                     },
+                     {
+                         "key":  "tripId",
+                         "type":  "string",
+                         "value":  "trip_123"
+                     },
+                     {
+                         "key":  "dayId",
+                         "type":  "string",
+                         "value":  "day_123"
+                     },
+                     {
+                         "key":  "itemId",
+                         "type":  "string",
+                         "value":  "item_123"
+                     },
+                     {
+                         "key":  "tagId",
+                         "type":  "string",
+                         "value":  "tag_123"
+                     },
+                     {
+                         "key":  "notifId",
+                         "type":  "string",
+                         "value":  "notif_123"
+                     },
+                     {
+                         "key":  "wishlistId",
+                         "type":  "string",
+                         "value":  "wishlist_123"
+                     }
+                 ],
+    "info":  {
+                 "description":  "Coleccion generada automaticamente desde src/app/api/v1.",
+                 "name":  "BonVoyage Backend API v1",
+                 "schema":  "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+                 "_postman_id":  "3029acdc-d287-4e65-b0f9-8ef73e539798"
+             },
+    "item":  [
+
+
+
+
+
+             ],
+    "auth":  {
+                 "bearer":  [
+                                {
+                                    "key":  "token",
+                                    "type":  "string",
+                                    "value":  "{{authToken}}"
+                                }
+                            ],
+                 "type":  "bearer"
+             }
+}
