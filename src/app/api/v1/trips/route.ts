@@ -158,8 +158,7 @@ export async function POST(req: NextRequest) {
       destId = newDest.rows[0].destination_id;
     }
 
-    const tripResult = await db.query<{ fn_create_trip: string }>(
-      `SELECT fn_create_trip(
+const tripResult = await db.query<{ trip_id: string }>(      `SELECT fn_create_trip(
         $1::uuid, $2::varchar, $3::uuid,
         $4::date, $5::date, $6::numeric, $7::varchar
       ) AS trip_id`,
@@ -173,8 +172,7 @@ export async function POST(req: NextRequest) {
         currency || 'USD',
       ]
     );
-    const tripId = tripResult.rows[0].fn_create_trip;
-
+const tripId = tripResult.rows[0].trip_id;
     return NextResponse.json({
       success: true,
       message: "Viaje, destino e itinerario creados exitosamente",
