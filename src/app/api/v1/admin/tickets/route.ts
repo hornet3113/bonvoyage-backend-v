@@ -20,10 +20,10 @@ export async function GET(req: NextRequest) {
 
     const result = await db.query(
       `SELECT
-         tk.ticket_id, tk.trip_id, tk.presupuesto_total,
-         tk.costo_acumulado, tk.balance_disponible,
+         tk.ticket_id, tk.trip_id, tk.total_budget,
+         tk.costo_acumulado, tk.available_balance,
          tk.total_lugares, tk.total_vuelos, tk.total_items,
-         tk.estado_presupuesto, tk.updated_at,
+         tk.budget_status, tk.updated_at,
          t.trip_name, t.status AS trip_status,
          u.email AS user_email,
          u.first_name || ' ' || u.last_name AS user_name,
@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
        FROM tickets tk
        JOIN trips t ON t.trip_id = tk.trip_id
        JOIN users u ON u.user_id = tk.user_id
-       WHERE ($1 = '' OR tk.estado_presupuesto = $1)
+       WHERE ($1 = '' OR tk.budget_status = $1)
        ORDER BY tk.updated_at DESC
        LIMIT $2 OFFSET $3`,
       [estado, limit, offset]
