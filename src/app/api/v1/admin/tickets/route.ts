@@ -21,8 +21,8 @@ export async function GET(req: NextRequest) {
     const result = await db.query(
       `SELECT
          tk.ticket_id, tk.trip_id, tk.total_budget,
-         tk.costo_acumulado, tk.available_balance,
-         tk.total_lugares, tk.total_vuelos, tk.total_items,
+         tk.accumulated_cost, tk.available_balance,
+         tk.total_places, tk.total_flights, tk.total_items,
          tk.budget_status, tk.updated_at,
          t.trip_name, t.status AS trip_status,
          u.email AS user_email,
