@@ -27,8 +27,9 @@ export async function GET(req: NextRequest) {
          t.created_at,
          u.email  AS user_email,
          u.first_name || ' ' || u.last_name AS user_name,
-         d.name    AS destination_name,
-         d.country AS destination_country,
+         d.name      AS destination_name,
+         d.country   AS destination_country,
+         d.image_url AS destination_image,
          COUNT(ii.item_id) FILTER (WHERE ii.status <> 'CANCELLED') AS total_items,
          COUNT(*) OVER() AS total_count
        FROM trips t
@@ -37,7 +38,7 @@ export async function GET(req: NextRequest) {
        LEFT JOIN itinerary_days id_ ON id_.trip_id = t.trip_id
        LEFT JOIN itinerary_items ii ON ii.day_id = id_.day_id
        WHERE ($1 = '' OR t.status = $1)
-       GROUP BY t.trip_id, u.email, u.first_name, u.last_name, d.name, d.country
+       GROUP BY t.trip_id, u.email, u.first_name, u.last_name, d.name, d.country, d.image_url
        ORDER BY t.created_at DESC
        LIMIT $2 OFFSET $3`,
       [status, limit, offset]
